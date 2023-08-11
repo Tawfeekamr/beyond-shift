@@ -1,0 +1,142 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id       String    @id @default(uuid())
+  username String
+  email    String    @unique
+  password String
+  role     UserRole
+  teams    Team[]    @relation("TeamMembers")
+  votes    Vote[]
+  projects Project[]
+  Session  Session[]
+}
+
+model Team {
+  id             String    @id @default(uuid())
+  name           String
+  members        User[]    @relation("TeamMembers")
+  projects       Project[]
+  retrospectives Retro[]
+  sessions       Session[]
+}
+
+model Project {
+  id             String   @id @default(uuid())
+  name           String
+  admin          User     @relation(fields: [adminId], references: [id])
+  teams          Team[]
+  sprints        Sprint[]
+  retrospectives Retro[]
+  adminId        String
+}
+
+model Sprint {
+  id        String       @id @default(uuid())
+  title     String
+  startDate DateTime
+  endDate   DateTime
+  project   Project      @relation(fields: [projectId], references: [id])
+  tickets   Ticket[]
+  status    SprintStatus
+  projectId String
+}
+
+model Ticket {
+  id          String        @id @default(uuid())
+  title       String
+  description String
+  severity    SeverityLevel
+  priority    PriorityLevel
+  sprint      Sprint        @relation(fields: [sprintId], references: [id])
+  status      TicketStatus
+  sprintId    String
+}
+
+model Retro {
+  id        String   @id @default(uuid())
+  title     String
+  date      DateTime
+  team      Team     @relation(fields: [teamId], references: [id])
+  project   Project  @relation(fields: [projectId], references: [id])
+  positives String[]
+  negatives String[]
+  actions   String[]
+  teamId    String
+  projectId String
+}
+
+model Session {
+  id          String       @id @default(uuid())
+  title       String
+  teamId      String
+  team        Team         @relation(fields: [teamId], references: [id])
+  creatorId   String
+  moderatorId String
+  stories     Story[]
+  status      SessionState
+  User        User?        @relation(fields: [userId], references: [id])
+  userId      String?
+}
+
+model Story {
+  id          String  @id @default(uuid())
+  title       String
+  description String?
+  session     Session @relation(fields: [sessionId], references: [id])
+  votes       Vote[]
+  sessionId   String
+}
+
+model Vote {
+  id      String @id @default(uuid())
+  user    User   @relation(fields: [userId], references: [id])
+  story   Story  @relation(fields: [storyId], references: [id])
+  points  Int
+  userId  String
+  storyId String
+}
+
+enum UserRole {
+  MEMBER
+  ADMIN
+}
+
+enum SprintStatus {
+  PLANNING
+  ACTIVE
+  COMPLETED
+}
+
+enum TicketStatus {
+  TO_DO
+  IN_PROGRESS
+  DONE
+}
+
+enum SeverityLevel {
+  CRITICAL
+  HIGH
+  MEDIUM
+  LOW
+}
+
+enum PriorityLevel {
+  URGENT
+  HIGH
+  MEDIUM
+  LOW
+}
+
+enum SessionState {
+  OPEN
+  IN_PROGRESS
+  CLOSED
+}
