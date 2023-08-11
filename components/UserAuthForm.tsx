@@ -33,9 +33,10 @@ export function UserAuthForm({ className, ...props }: UserAuthFormProps) {
         },
     })
 
-    
+
     const onSubmit = (values: z.infer<typeof formSchema>) => {
-        console.debug("ev", values)
+        console.debug("ev", values);
+        setIsLoading(true)
     }
     return (
         <Form {...form}>
@@ -56,7 +57,7 @@ export function UserAuthForm({ className, ...props }: UserAuthFormProps) {
                             disabled={isLoading}
                         />
                     </div>
-                    <Button disabled={isLoading}>
+                    <Button type={"submit"} disabled={isLoading}>
                         {isLoading && (
                             <Icons.spinner className="mr-2 h-4 w-4 animate-spin" />
                         )}

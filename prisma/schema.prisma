@@ -8,15 +8,18 @@ datasource db {
 }
 
 model User {
-  id       String    @id @default(uuid())
-  username String
-  email    String    @unique
-  password String
-  role     UserRole
-  teams    Team[]    @relation("TeamMembers")
-  votes    Vote[]
-  projects Project[]
-  Session  Session[]
+  id        String    @id @default(uuid())
+  username  String
+  email     String    @unique
+  password  String
+  role      UserRole
+  teams     Team[]    @relation("TeamMembers")
+  votes     Vote[]
+  projects  Project[]
+  Session   Session[]
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  lastLogin DateTime? // Nullable if you want to allow for users who have never logged in
 }
 
 model Team {
@@ -26,6 +29,8 @@ model Team {
   projects       Project[]
   retrospectives Retro[]
   sessions       Session[]
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
 }
 
 model Project {
@@ -36,6 +41,8 @@ model Project {
   sprints        Sprint[]
   retrospectives Retro[]
   adminId        String
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 }
 
 model Sprint {
