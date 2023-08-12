@@ -58,9 +58,10 @@ export function LoginForm() {
                     title: "Uh oh! Something went wrong.",
                     description: "There was a problem with your request.",
                 })
-           } else {
+           }
+            setTimeout(() => {
                 router.push("/dashboard");
-            }
+            }, 2000)
 
         })
             .catch((err) => {
@@ -73,7 +74,7 @@ export function LoginForm() {
         }).finally(() => {
             setTimeout(() => {
                 setLoading(false)
-            }, 1000)
+            }, 4000)
         })
 
     }
@@ -107,7 +108,7 @@ export function LoginForm() {
                         </FormItem>
                     )}
                 />
-                <Button className={"w-full"} type="submit" disabled={loading}>{loading ? <Icons.spinner/> : null} Submit</Button>
+                <Button className={"w-full"} type="submit" disabled={loading}>{loading ? <Icons.spinner className="mx-2" /> : null} Submit</Button>
             </form>
         </Form>
     )

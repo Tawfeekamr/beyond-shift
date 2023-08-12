@@ -6,8 +6,7 @@ import {NextResponse} from "next/server";
 import {SIGN_IN_ERROR} from "@/utils/statics";
 import axios from "axios";
 import {expiryOTP, generateOTP, isNotExpiredOTP} from "@/lib/utils";
-import {SessionProps} from "@/types";
-
+import {sendNodeMailer} from "@/lib/send-mail";
 
 export const authOptions: NextAuthOptions = {
     session: {
@@ -16,7 +15,7 @@ export const authOptions: NextAuthOptions = {
     },
     secret: process.env.NEXTAUTH_SECRET,
     pages: {
-        signIn: "/",
+        signIn: "/login",
         error: "/"
     },
     debug: true,
@@ -37,12 +36,11 @@ export const authOptions: NextAuthOptions = {
                     return new NextResponse(SIGN_IN_ERROR).json()
                 }
 
-                const user = await prismadb.user.findUnique({
+                const user = await prismadb.user.findFirst({
                     where: {
                         email: credentials.email
                     }
                 })
-                console.log("user", user)
 
                 if (!user) {
                     return new NextResponse(SIGN_IN_ERROR).json()
@@ -56,9 +54,16 @@ export const authOptions: NextAuthOptions = {
                 if (!isPasswordValid) {
                     return new NextResponse(SIGN_IN_ERROR).json()
                 }
+                await prismadb.user.update({
+                    where: {
+                        id: user.id
+                    },
+                    data: {
+                        lastLogin: new Date()
+                    }
+                })
                 const otp = generateOTP();
                 const otpExpiry = expiryOTP();
-
 
                 const validOTP = await prismadb.oTP.findFirst(
                     {
@@ -86,12 +91,7 @@ export const authOptions: NextAuthOptions = {
                     if (!createdOtp) {
                         return new NextResponse("OTP not created, try later.", {status: 500}).json()
                     } else {
-                         axios.post("/send-email", {
-                            email: user.email,
-                            message: `Your OTP is ${otp}, will expire at ${otpExpiry}`
-                        })
-                             .then((res) =>  console.log("send email done!",res))
-                             .catch((err) => console.log("send email done!",err))
+                      await sendNodeMailer("Email Verification", user.email, createdOtp.code)
                     }
 
                 }
@@ -109,7 +109,7 @@ export const authOptions: NextAuthOptions = {
 
     callbacks: {
         session: async ({session, token}): Promise<any> => {
-            console.log("session", session)
+            console.log("[AUTH] session", session)
             if (!session.user?.email) {
                 return {error: SIGN_IN_ERROR}
             }
@@ -118,7 +118,9 @@ export const authOptions: NextAuthOptions = {
                     //@ts-ignore
                     id: session?.user?.id
                 }
-            })
+            });
+
+
             if(!user) {
                 return  {}
             }
@@ -145,7 +147,7 @@ export const authOptions: NextAuthOptions = {
             }
             return token
         }
-    }
+    },
 }
 
 const handler = NextAuth(authOptions)

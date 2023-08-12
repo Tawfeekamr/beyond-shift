@@ -2,6 +2,7 @@ import {getServerSession} from "next-auth/next";
 import {authOptions} from "@/app/api/auth/[...nextauth]/route";
 import {AiFillCheckCircle} from "react-icons/ai";
 import Link from "next/link";
+import {OTPForm} from "@/components/OTPForm";
 
 export default async function Page() {
     const session = await getServerSession(authOptions);
@@ -20,7 +21,7 @@ export default async function Page() {
     }
     return (
         <>
-            <>Email</>
+            <OTPForm />
         </>
     )
 }
