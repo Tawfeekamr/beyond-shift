@@ -14,9 +14,11 @@ import {
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
 import {useForm} from "react-hook-form";
-import { useRouter } from 'next/navigation'
+import {redirect, useRouter} from 'next/navigation'
 import {CHECK_COMPLEX_PASSWORD} from "@/utils/regex";
 import {useToast} from "@/components/ui/use-toast";
+import {Icons} from "@/components/Icons";
+import {useState} from "react";
 
 const formSchema = z.object({
     email: z.string().min(5, {
@@ -28,6 +30,7 @@ const formSchema = z.object({
 })
 
 export function LoginForm() {
+    const [loading, setLoading] = useState<boolean>(false);
     const router = useRouter();
     const { toast } = useToast();
 
@@ -44,18 +47,20 @@ export function LoginForm() {
     function onSubmit(values: z.infer<typeof formSchema>) {
         // Do something with the form values.
         // ✅ This will be type-safe and validated.
+        setLoading(true);
         signIn("credentials", {
             ...values
        , redirect: false     }).then((res) => {
             console.log("res",res);
-
             if(res?.error && res?.error !== "undefined") {
                 toast({
                     variant: "destructive",
                     title: "Uh oh! Something went wrong.",
                     description: "There was a problem with your request.",
                 })
-           }
+           } else {
+                router.push("/dashboard");
+            }
 
         })
             .catch((err) => {
@@ -65,6 +70,10 @@ export function LoginForm() {
                     title: "Uh oh! Something went wrong.",
                     description: "There was a problem with your request.",
                 })
+        }).finally(() => {
+            setTimeout(() => {
+                setLoading(false)
+            }, 1000)
         })
 
     }
@@ -98,7 +107,7 @@ export function LoginForm() {
                         </FormItem>
                     )}
                 />
-                <Button className={"w-full"} type="submit">Submit</Button>
+                <Button className={"w-full"} type="submit" disabled={loading}>{loading ? <Icons.spinner/> : null} Submit</Button>
             </form>
         </Form>
     )

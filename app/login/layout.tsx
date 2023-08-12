@@ -1,0 +1,20 @@
+import React from "react";
+import {getServerSession} from "next-auth/next";
+import {authOptions} from "@/app/api/auth/[...nextauth]/route";
+import {redirect} from "next/navigation";
+
+export default async function Layout({children}: { children: React.ReactNode }) {
+    const session = await getServerSession(authOptions);
+    //@ts-ignore
+    if(session?.user?.isVerified) {
+        redirect("/dashboard");
+    }
+
+    return (
+        <main className="flex min-h-screen flex-col items-center justify-between px-24 py-16">
+            <>
+                {children}
+            </>
+        </main>
+        )
+}
