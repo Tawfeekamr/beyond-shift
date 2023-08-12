@@ -2,10 +2,17 @@ import { compare } from 'bcrypt'
 import NextAuth, { type NextAuthOptions } from 'next-auth'
 import CredentialsProvider from 'next-auth/providers/credentials'
 import {prismadb} from "@/lib/prismadb";
+import {NextResponse} from "next/server";
+import {SIGN_IN_ERROR} from "@/utils/statics";
 export const authOptions: NextAuthOptions = {
     session: {
         strategy: 'jwt',
         maxAge: 30 * 24 * 60 * 60,
+    },
+    secret: process.env.NEXTAUTH_SECRET,
+    pages: {
+     signIn: "/",
+     error: "/"
     },
     debug: true,
     providers: [
@@ -19,9 +26,10 @@ export const authOptions: NextAuthOptions = {
                 },
                 password: { label: 'Password', type: 'password' }
             },
+            //@ts-ignore
             async authorize(credentials) {
                 if (!credentials?.email || !credentials.password) {
-                    return null
+                    return new NextResponse(SIGN_IN_ERROR).json()
                 }
 
                 const user = await prismadb.user.findUnique({
@@ -29,9 +37,10 @@ export const authOptions: NextAuthOptions = {
                         email: credentials.email
                     }
                 })
+                console.log("user",user)
 
                 if (!user) {
-                    return null
+                    return new NextResponse(SIGN_IN_ERROR).json()
                 }
 
                 const isPasswordValid = await compare(
@@ -40,7 +49,7 @@ export const authOptions: NextAuthOptions = {
                 )
 
                 if (!isPasswordValid) {
-                    return null
+                    return new NextResponse(SIGN_IN_ERROR).json()
                 }
 
                 return {
@@ -52,16 +61,11 @@ export const authOptions: NextAuthOptions = {
     ],
 
     callbacks: {
-        session: async ({ session, token }) => {
-            await prismadb.user.update({
-                where: {
-                    email: session?.user?.email || undefined
-                },
-                data: {
-                    last_login: new Date()
-                }
-            })
-
+        session: async ({ session, token }): Promise<any> => {
+            console.log("session",session)
+            if(!session.user?.email) {
+                return {error: SIGN_IN_ERROR}
+            }
             return {
                 ...session,
                 user: {
@@ -70,6 +74,7 @@ export const authOptions: NextAuthOptions = {
                 }
             }
         },
+
         jwt: ({ token, user }) => {
             if (user) {
                 const u = user as unknown as any
@@ -79,6 +84,7 @@ export const authOptions: NextAuthOptions = {
                     secret: process.env.NEXTAUTH_SECRET
                 }
             }
+            console.log("token",token)
             return token
         }
     }

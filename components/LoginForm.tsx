@@ -15,6 +15,8 @@ import {
 import { Input } from "@/components/ui/input"
 import {useForm} from "react-hook-form";
 import { useRouter } from 'next/navigation'
+import {CHECK_COMPLEX_PASSWORD} from "@/utils/regex";
+import {useToast} from "@/components/ui/use-toast";
 
 const formSchema = z.object({
     email: z.string().min(5, {
@@ -22,11 +24,12 @@ const formSchema = z.object({
     }),
     password: z.string().min(8, {
         message: "Password must be at least 8 characters.",
-    }),
+    }).regex(CHECK_COMPLEX_PASSWORD, "Password must have at least one: lowercase, uppercase, digit, special character."),
 })
 
 export function LoginForm() {
     const router = useRouter();
+    const { toast } = useToast();
 
     // 1. Define your form.
     const form = useForm<z.infer<typeof formSchema>>({
@@ -41,14 +44,27 @@ export function LoginForm() {
     function onSubmit(values: z.infer<typeof formSchema>) {
         // Do something with the form values.
         // ✅ This will be type-safe and validated.
-        console.log(values);
         signIn("credentials", {
             ...values
-        }).then((r) => {
-            console.log(r)
+       , redirect: false     }).then((res) => {
+            console.log("res",res);
+
+            if(res?.error && res?.error !== "undefined") {
+                toast({
+                    variant: "destructive",
+                    title: "Uh oh! Something went wrong.",
+                    description: "There was a problem with your request.",
+                })
+           }
+
         })
             .catch((err) => {
-            console.log(err)
+            console.error("err",err);
+                toast({
+                    variant: "destructive",
+                    title: "Uh oh! Something went wrong.",
+                    description: "There was a problem with your request.",
+                })
         })
 
     }

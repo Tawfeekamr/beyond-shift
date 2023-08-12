@@ -1,0 +1,1 @@
+export const SIGN_IN_ERROR = "Invalid username or password. Please try again."

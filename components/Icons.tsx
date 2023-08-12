@@ -149,5 +149,8 @@ export const Icons = {
             <circle cx="190.1" cy="186.8" r="34.2" fill="#ff1400"/>
             <path className="st0" d="M190.1 56.4l123 278.9h67.1L231.7 0h-83.2L0 335.3h220.8v-97.5h-61.4v62.9h-77z"/>
         </svg>
+    ),
+    close: (props: IconProps) => (
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-x"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
     )
 }

@@ -8,29 +8,44 @@ datasource db {
 }
 
 model User {
+  id            String          @id @default(uuid())
+  name          String
+  image         String?
+  username      String
+  email         String          @unique
+  password      String
+  role          UserRole
+  teams         Team[]          @relation("TeamMembers")
+  votes         Vote[]
+  projects      Project[]
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+  lastLogin     DateTime?
+  isVerified    Boolean         @default(false) // Indicates if the user has been verified
+  SprintSession SprintSession[]
+  account       Account[]
+  session       Session[]
+}
+
+model OTP {
   id        String    @id @default(uuid())
-  username  String
-  email     String    @unique
-  password  String
-  role      UserRole
-  teams     Team[]    @relation("TeamMembers")
-  votes     Vote[]
-  projects  Project[]
-  Session   Session[]
+  code      String // The actual OTP code
+  expiresAt DateTime // The expiration date for the OTP
+  usedAt    DateTime? // The date the OTP was used, nullable if not used yet
+  userId    String // The user associated with this OTP
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
-  lastLogin DateTime? // Nullable if you want to allow for users who have never logged in
 }
 
 model Team {
-  id             String    @id @default(uuid())
+  id             String          @id @default(uuid())
   name           String
-  members        User[]    @relation("TeamMembers")
+  members        User[]          @relation("TeamMembers")
   projects       Project[]
   retrospectives Retro[]
-  sessions       Session[]
-  createdAt      DateTime  @default(now())
-  updatedAt      DateTime  @updatedAt
+  sessions       SprintSession[]
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
 }
 
 model Project {
@@ -80,7 +95,7 @@ model Retro {
   projectId String
 }
 
-model Session {
+model SprintSession {
   id          String       @id @default(uuid())
   title       String
   teamId      String
@@ -94,12 +109,12 @@ model Session {
 }
 
 model Story {
-  id          String  @id @default(uuid())
-  title       String
-  description String?
-  session     Session @relation(fields: [sessionId], references: [id])
-  votes       Vote[]
-  sessionId   String
+  id            String        @id @default(uuid())
+  title         String
+  description   String?
+  SprintSession SprintSession @relation(fields: [sessionId], references: [id])
+  votes         Vote[]
+  sessionId     String
 }
 
 model Vote {
@@ -109,6 +124,41 @@ model Vote {
   points  Int
   userId  String
   storyId String
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
 }
 
 enum UserRole {
